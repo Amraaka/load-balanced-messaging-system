@@ -7,3 +7,8 @@ build/
 .idea/
 .vscode/
 coverage/
+
+# part2 build artifacts
+part2/heat
+part2/output_*.csv
+part2/heat_distribution.png
