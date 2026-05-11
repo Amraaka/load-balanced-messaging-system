@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Distributed Chat Client</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2em auto; }
+    #messages { list-style: none; padding: 0; }
+    #messages li { padding: 4px; border-bottom: 1px solid #eee; }
+    #status { padding: 8px; background: #f0f0f0; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <h2>Distributed Chat</h2>
+
+  <input id="clientId" type="number" placeholder="Your client ID (1, 2, 3, ...)" />
+  <button onclick="connect()">Connect</button>
+
+  <div id="status">Not connected</div>
+
+  <input id="msg" placeholder="Type a message" style="width: 70%" />
+  <button onclick="send()">Send</button>
+
+  <ul id="messages"></ul>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    let socket = null;
+    let myId = null;
+
+    function connect() {
+      myId = parseInt(document.getElementById('clientId').value);
+      if (!myId) { alert('Enter a client ID'); return; }
+
+      if (socket) {
+        socket.removeAllListeners();
+        socket.disconnect();
+        socket = null;
+      }
+
+      // Load balancing rule: even -> A (8001), odd -> B (8002)
+      const primary  = (myId % 2 === 0) ? 8001 : 8002;
+      const fallback = (primary === 8001) ? 8002 : 8001;
+
+      tryConnect(primary, fallback);
+    }
+
+    function tryConnect(port, fallback) {
+      const url = `http://localhost:${port}`;
+      setStatus(`Trying ${url}...`);
+
+      socket = io(url, { reconnection: false, timeout: 2000, forceNew: true });
+
+      socket.on('connect', () => {
+        setStatus(`Connected to ${url} as client ${myId}`);
+        socket.emit('register', myId);
+      });
+
+      socket.on('connect_error', () => {
+        if (fallback) {
+          setStatus(`Primary server down, falling back to port ${fallback}...`);
+          socket.close();
+          tryConnect(fallback, null);
+        } else {
+          setStatus('Both servers unreachable.');
+        }
+      });
+
+      socket.on('message', (data) => {
+        const li = document.createElement('li');
+        li.textContent = `Client ${data.from}: ${data.text}`;
+        document.getElementById('messages').appendChild(li);
+      });
+    }
+
+    function send() {
+      const text = document.getElementById('msg').value;
+      if (!text || !socket) return;
+      socket.emit('message', { from: myId, text });
+      document.getElementById('msg').value = '';
+    }
+
+    function setStatus(s) {
+      document.getElementById('status').innerText = s;
+    }
+  </script>
+</body>
+</html>

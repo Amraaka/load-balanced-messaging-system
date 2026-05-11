@@ -3,9 +3,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 const {io: ioClient} = require('socket.io-client');
 
-const PORT = 8001;
-const SERVER_NAME = 'Server A';
-const PEER_URL = 'http://localhost:8002';
+const PORT = 8002;
+const SERVER_NAME = 'Server B';
+const PEER_URL = 'http://localhost:8001';
 
 const app = express();
 const server = http.createServer(app);
