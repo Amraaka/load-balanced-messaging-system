@@ -1,3 +1,21 @@
+/*
+ * 1D heat equation on a rod, parallelized with MPI.
+ *
+ * Build:
+ *   mpicc -O2 -Wall -o heat heat.c
+ *
+ * Run (N=4096 must be divisible by the process count):
+ *   mpirun -n 4 ./heat 100        # 100 time steps  -> output.csv
+ *   mv output.csv output_100.csv
+ *   mpirun -n 4 ./heat 1000       # 1000 time steps -> output.csv
+ *   mv output.csv output_1000.csv
+ *
+ * Plot:
+ *   pip install matplotlib
+ *   python plot.py                # reads output_100.csv + output_1000.csv,
+ *                                 # writes heat_distribution.png
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
